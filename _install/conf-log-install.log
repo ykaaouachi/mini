@@ -1,0 +1,149 @@
+Creating a MySQL database and user on the command line, and a bash script to automate the process
+
+After having to look up the syntax for creating a MySQL user for the umpteenth 
+time, I've decided to jot it down here for future reference. I've also included 
+a bash script, which automates the process of creating the database and setting 
+up the user privileges.
+
+For the following examples, I assume that you're running a MySQL server, and 
+have logged into it. All text within brackets, e.g. <text>, is meant to be 
+replaced with a value of your choosing.
+
+Let's start with the basics. Create a new database:
+
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+CREATE DATABASE <database>;
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+
+Next, we create a new user:
+
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-::-:-:-:-:-:-:
+GRANT USAGE ON *.* TO <username>@localhost IDENTIFIED BY '<password>';
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-::-:-:-:-:-:-:
+
+Now we allow the new user access to the database we've just created:
+
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-::-:-:-:-:-:-:
+GRANT ALL PRIVILEGES ON <database_name>.* TO <username>@localhost;
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-::-:-:-:-:-:-:
+
+Finally, we tell MySQL to reload its grant tables:
+
+:-:-:-:-:-:-:-:-:-:
+FLUSH PRIVILEGES;
+:-:-:-:-:-:-:-:-:-:
+
+You should now be able to log in to the server and access the database with the 
+credentials you supplied:
+
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+mysql -u<username> -p<password> <database>
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+
+Right, so if this is something you have to do often, entering all of that 
+quickly becomes a bit of a pain. Brian Racer has published a bash script, 
+which automates the above steps. Brian's example gives the new user access to 
+all the databases on the server, which is not what you might want or expect, 
+so I've modified the script to give the user access to only the database being 
+created:
+
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+#!/bin/bash
+  
+EXPECTED_ARGS=3
+E_BADARGS=65
+MYSQL=`which mysql`
+  
+Q1="CREATE DATABASE IF NOT EXISTS $1;"
+Q2="GRANT USAGE ON *.* TO $2@localhost IDENTIFIED BY '$3';"
+Q3="GRANT ALL PRIVILEGES ON $1.* TO $2@localhost;"
+Q4="FLUSH PRIVILEGES;"
+SQL="${Q1}${Q2}${Q3}${Q4}"
+  
+if [ $# -ne $EXPECTED_ARGS ]
+then
+  echo "Usage: $0 dbname dbuser dbpass"
+  exit $E_BADARGS
+fi
+  
+$MYSQL -uroot -p -e "$SQL"
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+
+Following Brian's example, I've named the script createdb and moved it to the /usr/bin directory on my server, after applying executable permissions to it:
+
+:-:-:-:-:-:-:-:-:-:
+chmod 755 createdb
+:-:-:-:-:-:-:-:-:-:
+
+Creating a new database and user is now as simple as:
+
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+createdb <database> <user> <password>
+:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+
+
+
+$ ./_install/createdb_vitale.sh
+bash: ./_install/createdb_vitale.sh: No such file or directory
+ 
+$ ls ./_install/
+01-create-database.sql  
+02-create-table-song.sql  
+03-insert-demo-data-into-table-song.sql  
+createdb-vitale.sh  mini-logo.png
+ 
+$ chmod 755 ./_install/createdb-vitale.sh 
+ 
+$ ./_install/createdb_vitale.sh
+bash: ./_install/createdb_vitale.sh: No such file or directory
+ 
+$ _install/createdb_vitale.sh
+bash: _install/createdb_vitale.sh: No such file or directory
+ 
+$ mv ./_install/createdb-vitale.sh /usr/bin/createdb-vitale.sh
+mv: cannot move ‘./_install/createdb-vitale.sh’ to 
+‘/usr/bin/createdb-vitale.sh’: Permission denied
+ 
+$ sudo mv ./_install/createdb-vitale.sh /usr/bin/createdb-vitale.sh                              
+ 
+$ createdb-vitale 
+bash: createdb-vitale: command not found
+ 
+$ chmod 755 /usr/bin/createdb-vitale.sh
+ 
+$ createdb-vitale 
+bash: createdb-vitale: command not found
+
+$ /usr/bin/createdb-vitale.sh
+Usage: /usr/bin/createdb-vitale.sh dbname dbuser dbpass
+ 
+$ echo $PATH
+/home/ubuntu/.nvm/versions/node/v4.7.3/bin:/usr/local/rvm/gems/ruby-2.3.0/bin:
+/usr/local/rvm/gems/ruby-2.3.0@global/bin:/usr/local/rvm/rubies/ruby-2.3.0/bin:
+/mnt/shared/bin:/home/ubuntu/workspace/node_modules/.bin:/home/ubuntu/bin:
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/mnt/shared/sbin:
+/opt/gitl:/opt/go/bin:/mnt/shared/c9/app.nw/bin:/usr/local/rvm/bin
+ 
+$ PATH=~/bin:$PATH
+$ echo $PATH
+/home/ubuntu/bin:/home/ubuntu/.nvm/versions/node/v4.7.3/bin:
+/usr/local/rvm/gems/ruby-2.3.0/bin:/usr/local/rvm/gems/ruby-2.3.0@global/bin:
+/usr/local/rvm/rubies/ruby-2.3.0/bin:/mnt/shared/bin:
+/home/ubuntu/workspace/node_modules/.bin:/home/ubuntu/bin:/usr/local/sbin:
+/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/mnt/shared/sbin:/opt/gitl:
+/opt/go/bin:/mnt/shared/c9/app.nw/bin:/usr/local/rvm/bin
+ 
+$ sudo ln -s /usr/bin/createdb-vitale.sh /usr/local/bin/createdb-vitale
+
+$ createdb-vitale
+Usage: /usr/local/bin/createdb-vitale dbname dbuser dbpass
+
+
+
+====== ====== ====== ====== ====== ====== ====== ====== ====== ====== ====== 
+
+# lsb_release -a
+# uname -a
+
+====== ====== ====== ====== ====== ====== ====== ====== ====== ====== ====== 
+

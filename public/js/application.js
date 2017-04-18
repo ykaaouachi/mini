@@ -34,6 +34,24 @@ $(function() {
                     // this will ALWAYS be executed, regardless if the ajax-call was success or not
                 });
         });
+        
+        $('#javascript-ajax-button-astuce').on('click', function(){
+
+            // send an ajax-request to this URL: current-server.com/songs/ajaxGetStats
+            // "url" is defined in views/_templates/footer.php
+            $.ajax(url + "/astuces/ajaxGetStats")
+                .done(function(result) {
+                    // this will be executed if the ajax-call was successful
+                    // here we get the feedback from the ajax-call (result) and show it in #javascript-ajax-result-box
+                    $('#javascript-ajax-result-box').html(result);
+                })
+                .fail(function() {
+                    // this will be executed if the ajax-call had failed
+                })
+                .always(function() {
+                    // this will ALWAYS be executed, regardless if the ajax-call was success or not
+                });
+        });
     }
 
 });

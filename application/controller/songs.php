@@ -37,6 +37,7 @@ class Songs extends Controller
      */
     public function addSong()
     {
+
         // if we have POST data to create a new song entry
         if (isset($_POST["submit_add_song"])) {
             // do addSong() in model/model.php

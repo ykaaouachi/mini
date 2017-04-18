@@ -22,7 +22,7 @@ class Application
 
         // check for controller: no controller given ? then load start-page
         if (!$this->url_controller) {
-
+            
             require APP . 'controller/home.php';
             $page = new Home();
             $page->index();
@@ -37,7 +37,6 @@ class Application
 
             // check for method: does such a method exist in the controller ?
             if (method_exists($this->url_controller, $this->url_action)) {
-
                 if (!empty($this->url_params)) {
                     // Call the method and pass arguments to it
                     call_user_func_array(array($this->url_controller, $this->url_action), $this->url_params);
